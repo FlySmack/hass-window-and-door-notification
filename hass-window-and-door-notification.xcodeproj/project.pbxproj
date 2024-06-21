@@ -1,0 +1,78 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXFileReference section */
+		09CF5F5A2C2536C8003DF8A4 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		09CF5F5B2C25370C003DF8A4 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		09CF5F5C2C25374A003DF8A4 /* hass-window-and-door-notification.yaml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = "hass-window-and-door-notification.yaml"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		09CF5F532C253682003DF8A4 = {
+			isa = PBXGroup;
+			children = (
+				09CF5F5C2C25374A003DF8A4 /* hass-window-and-door-notification.yaml */,
+				09CF5F5B2C25370C003DF8A4 /* README.md */,
+				09CF5F5A2C2536C8003DF8A4 /* LICENSE */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXProject section */
+		09CF5F542C253682003DF8A4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1540;
+			};
+			buildConfigurationList = 09CF5F572C253682003DF8A4 /* Build configuration list for PBXProject "hass-window-and-door-notification" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 09CF5F532C253682003DF8A4;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		09CF5F582C253682003DF8A4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		09CF5F592C253682003DF8A4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		09CF5F572C253682003DF8A4 /* Build configuration list for PBXProject "hass-window-and-door-notification" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				09CF5F582C253682003DF8A4 /* Debug */,
+				09CF5F592C253682003DF8A4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 09CF5F542C253682003DF8A4 /* Project object */;
+}
