@@ -1,0 +1,82 @@
+blueprint:
+  name: Window, door and lock open detection and notification
+  description: Regularly test all sensors with 'window', 'door' and 'lock' device-class for open state and if so execute an action.
+  domain: automation
+  input:
+    window_state:
+      name: The state checked for device-class 'window'
+      description: The window state above will trigger the action
+      selector:
+        select:
+          options:
+            - open
+            - closed
+    door_state:
+      name: The state checked for device-class 'door'
+      description: The door state above will trigger the action
+      selector:
+        select:
+          options:
+            - open
+            - closed
+    lock_state:
+      name: The state checked for device-class 'lock'
+      description: The lock state above will trigger the action
+      selector:
+        select:
+          options:
+            - locked
+            - unlocked
+            - jammed
+    weather:
+      name: The weather entity to check if it raining
+      description: The weather state rain will trigger the action
+      selector:
+        target:
+          entity:
+          - domain:
+            - weather
+    exclude:
+      name: Excluded Sensors
+      description: Window, door and lock devices (e.g. smartphone) to exclude from detection. Only entities are supported, devices must be expanded!
+      default:
+        entity_id: []
+      selector:
+        target:
+          entity:
+          - device_class:
+            - window
+            - door
+            - lock
+          - domain:
+            - lock
+    actions:
+      name: Actions
+      description: Notifications or similar to be run. {{sensors}} is replaced with the names of sensors are above states.
+      selector:
+        action: {}
+variables:
+  exclude: !input exclude
+  sensors: -<
+    {% set result = namespace(sensors=[]) %}
+    {% for state in states.sensor | selectattr('attributes.device_class', '==', 'humidity') %}
+      {% if 0 <= state.state | int(-1) > threshold | int and not state.entity_id in exclude.entity_id %}
+        {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ ' %)'] %}
+      {% endif %}
+    {% endfor %}
+    {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'humidity') | selectattr('state', '==', 'on') %}
+      {% if not state.entity_id in exclude.entity_id %}
+        {% set result.sensors = result.sensors + [state.name] %}
+      {% endif %}
+    {% endfor %}
+    {{result.sensors|join(', ')}}
+trigger:
+  - platform: state
+    id: weather_entity
+    to: "rain"
+condition:
+- '{{ sensors != '''' }}'
+action:
+- choose: []
+  default: !input actions
+mode: single
