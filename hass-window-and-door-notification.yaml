@@ -9,33 +9,54 @@ blueprint:
       selector:
         select:
           options:
-            - open
-            - closed
+            - label: open
+              value: 'on'
+            - label: closed
+              value: 'off'
     door_state:
       name: The state checked for device-class 'door'
       description: The door state above will trigger the action
       selector:
         select:
           options:
-            - open
-            - closed
+            - label: open
+              value: 'on'
+            - label: closed
+              value: 'off'
     lock_state:
       name: The state checked for device-class 'lock'
       description: The lock state above will trigger the action
       selector:
         select:
+          multiple: true
           options:
             - locked
             - unlocked
             - jammed
-    weather:
+    weather_entity:
       name: The weather entity to check if it raining
       description: The weather state rain will trigger the action
       selector:
-        target:
-          entity:
-          - domain:
-            - weather
+        entity:
+          filter:
+            domain: weather
+    weather_state:
+      name: The states checked for the weather entity
+      description: The weather states above will trigger the action
+      selector:
+        select:
+          multiple: true
+          options:
+            - hail
+            - lightning
+            - lightning-rainy
+            - pouring
+            - rainy
+    add_trigger:
+      name: Alternate user defined trigger
+      description: Optional and alternate user defined trigger beside the weather trigger.
+      selector:
+        trigger:
     exclude:
       name: Excluded Sensors
       description: Window, door and lock devices (e.g. smartphone) to exclude from detection. Only entities are supported, devices must be expanded!
@@ -50,33 +71,45 @@ blueprint:
             - lock
           - domain:
             - lock
-    actions:
-      name: Actions
-      description: Notifications or similar to be run. {{sensors}} is replaced with the names of sensors are above states.
+    weather_actions:
+      name: Actions for weather trigger
+      description: Notifications or similar to be run when weather triggers the automation. {{sensors}} is replaced with the names of sensors are above states.
       selector:
         action: {}
 variables:
+  window_state: !input window_state
+  door_state: !input door_state
+  lock_state: !input lock_state
   exclude: !input exclude
-  sensors: -<
+  sensors: >
     {% set result = namespace(sensors=[]) %}
-    {% for state in states.sensor | selectattr('attributes.device_class', '==', 'humidity') %}
-      {% if 0 <= state.state | int(-1) > threshold | int and not state.entity_id in exclude.entity_id %}
-        {% set result.sensors = result.sensors + [state.name ~ ' (' ~ state.state ~ ' %)'] %}
+    {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'window') | selectattr('state', '==', window_state) %}
+      {% if not state.entity_id in exclude.entity_id %}
+        {% set result.sensors = result.sensors + [state.name] %}
       {% endif %}
     {% endfor %}
-    {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'humidity') | selectattr('state', '==', 'on') %}
+    {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'door') | selectattr('state', '==', door_state) %}
+      {% if not state.entity_id in exclude.entity_id %}
+        {% set result.sensors = result.sensors + [state.name] %}
+      {% endif %}
+    {% endfor %}
+    {% for state in states.lock | selectattr('state', 'contains', lock_state) %}
       {% if not state.entity_id in exclude.entity_id %}
         {% set result.sensors = result.sensors + [state.name] %}
       {% endif %}
     {% endfor %}
     {{result.sensors|join(', ')}}
+#trigger:
+#  - platform: state
+#    entity_id: !input weather_entity
+#    to: "rainy"
 trigger:
   - platform: state
-    id: weather_entity
-    to: "rain"
+    entity_id: "input_boolean.severe_weather_rain"
+    to: "on"
 condition:
 - '{{ sensors != '''' }}'
 action:
 - choose: []
-  default: !input actions
+  default: !input weather_actions
 mode: single
