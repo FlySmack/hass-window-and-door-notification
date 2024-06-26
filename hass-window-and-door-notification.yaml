@@ -52,11 +52,24 @@ blueprint:
             - lightning-rainy
             - pouring
             - rainy
-    add_trigger:
-      name: Alternate user defined trigger
-      description: Optional and alternate user defined trigger beside the weather trigger.
+    person_entity:
+      name: Person
+      description: Optional trigger based on people leaving a zone and windows, doors, or locks are still open
       selector:
-        trigger:
+        entity:
+          filter:
+          - domain:
+            - person
+          multiple: true
+    zone_entity:
+      name: Zone
+      description: Optional trigger based on people leaving a zone and windows, doors, or locks are still open
+      selector:
+        entity:
+          filter:
+          - domain:
+            - zone
+          multiple: false
     exclude:
       name: Excluded Sensors
       description: Window, door and lock devices (e.g. smartphone) to exclude from detection. Only entities are supported, devices must be expanded!
@@ -99,14 +112,19 @@ variables:
       {% endif %}
     {% endfor %}
     {{result.sensors|join(', ')}}
-#trigger:
-#  - platform: state
-#    entity_id: !input weather_entity
-#    to: "rainy"
 trigger:
   - platform: state
-    entity_id: "input_boolean.severe_weather_rain"
-    to: "on"
+    entity_id: !input weather_entity
+    to: !input weather_state
+trigger:
+  - platform: zone
+    entity_id: !input person_entity
+    zone: !input zone_entity
+    event: leave
+#trigger:
+#  - platform: state
+#    entity_id: "input_boolean.severe_weather_rain"
+#    to: "on"
 condition:
 - '{{ sensors != '''' }}'
 action:
