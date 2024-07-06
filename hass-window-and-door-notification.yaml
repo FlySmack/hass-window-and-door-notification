@@ -116,7 +116,6 @@ trigger:
   - platform: state
     entity_id: !input weather_entity
     to: !input weather_state
-trigger:
   - platform: zone
     entity_id: !input person_entity
     zone: !input zone_entity
