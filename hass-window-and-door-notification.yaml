@@ -1,6 +1,6 @@
 blueprint:
   name: Window, door and lock open detection and notification
-  description: Regularly test all sensors with 'window', 'door' and 'lock' device-class for open state and if so execute an action.
+  description: Regularly test all sensors with 'window', 'door' and 'lock' device-class for open state and if so execute an action in case a specific weather condition has been raised, or a peson has left the zone.
   domain: automation
   source_url: https://github.com/FlySmack/hass-window-and-door-notification
   input:
@@ -71,6 +71,16 @@ blueprint:
           - domain:
             - zone
           multiple: false
+    weather_tranlation_language:
+      name: Select the language for the translation of the weather entities state
+      description: Select the language for the translation of the weather entities state, which will be provided by the variable {{weather_translated}}
+      selector:
+        select:
+          options:
+            - label: DE
+              value: 'de'
+            - label: EN
+              value: 'en'
     exclude:
       name: Excluded Sensors
       description: Window, door and lock devices (e.g. smartphone) to exclude from detection. Only entities are supported, devices must be expanded!
@@ -85,16 +95,18 @@ blueprint:
             - lock
           - domain:
             - lock
-    weather_actions:
-      name: Actions for weather trigger
-      description: Notifications or similar to be run when weather triggers the automation. {{sensors}} is replaced with the names of sensors are above states.
+    actions:
+      name: Actions for weather and zone trigger
+      description: Notifications or similar to be run when weather, or leaving the zone triggers the automation. {{sensors}} is replaced with the names of sensors are above states. {{weather_translated}} is replaced with the triggered weather state
       selector:
         action: {}
 variables:
   window_state: !input window_state
   door_state: !input door_state
   lock_state: !input lock_state
+  weather_entity: !input weather_entity
   exclude: !input exclude
+  weather_tranlation_language: !input weather_tranlation_language
   sensors: >
     {% set result = namespace(sensors=[]) %}
     {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'window') | selectattr('state', '==', window_state) %}
@@ -113,6 +125,46 @@ variables:
       {% endif %}
     {% endfor %}
     {{result.sensors|join(', ')}}
+  weather_translated: >
+    {% set result = namespace(weather_translated='') %}
+    {% if weather_tranlation_language == 'de' %}
+        {% if states(weather_entity) == 'clear-night' %}
+            {% set result.weather_translated = "klare Nacht" %}
+        {% elif states(weather_entity) == 'cloudy' %}
+            {% set result.weather_translated = "Wolkig" %}
+        {% elif states(weather_entity) == 'fog' %}
+            {% set result.weather_translated = "Nebel" %}
+        {% elif states(weather_entity) == 'hail' %}
+            {% set result.weather_translated = "Hagel" %}
+        {% elif states(weather_entity) == 'lightning' %}
+            {% set result.weather_translated = "Gewitter" %}
+        {% elif states(weather_entity) == 'lightning-rainy' %}
+            {% set result.weather_translated = "Gewitter mit Regen" %}
+        {% elif states(weather_entity) == 'partlycloudy' %}
+            {% set result.weather_translated = "teilweise Bewölkt" %}
+        {% elif states(weather_entity) == 'pouring' %}
+            {% set result.weather_translated = "Starkregen" %}
+        {% elif states(weather_entity) == 'rainy' %}
+            {% set result.weather_translated = "Regen" %}
+        {% elif states(weather_entity) == 'snowy' %}
+            {% set result.weather_translated = "Schnee" %}
+        {% elif states(weather_entity) == 'snowy-rainy' %}
+            {% set result.weather_translated = "Schneeregen" %}
+        {% elif states(weather_entity) == 'sunny' %}
+            {% set result.weather_translated = "Sonnig" %}
+        {% elif states(weather_entity) == 'windy' %}
+            {% set result.weather_translated = "Windig" %}
+        {% elif states(weather_entity) == 'windy' %}
+            {% set result.weather_translated = "Windig" %}
+        {% elif states(weather_entity) == 'windy-variant' %}
+            {% set result.weather_translated = "Windig aus wechselnden Richtungen" %}
+        {% elif states(weather_entity) == 'exceptional' %}
+            {% set result.weather_translated = "ausserordentliches Wetter" %}
+        {% endif %}
+        {{ result.weather_translated }}
+    {% else %}
+        {{ states(weather_entity) }}
+    {% endif %}
 trigger:
   - platform: state
     entity_id: !input weather_entity
@@ -125,5 +177,5 @@ condition:
 - '{{ sensors != '''' }}'
 action:
 - choose: []
-  default: !input weather_actions
+  default: !input actions
 mode: single
