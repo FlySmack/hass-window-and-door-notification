@@ -71,7 +71,7 @@ blueprint:
           - domain:
             - zone
           multiple: false
-    weather_tranlation_language:
+    weather_translation_language:
       name: Select the language for the translation of the weather entities state
       description: Select the language for the translation of the weather entities state, which will be provided by the variable {{weather_translated}}
       selector:
@@ -106,7 +106,7 @@ variables:
   lock_state: !input lock_state
   weather_entity: !input weather_entity
   exclude: !input exclude
-  weather_tranlation_language: !input weather_tranlation_language
+  weather_translation_language: !input weather_translation_language
   sensors: >
     {% set result = namespace(sensors=[]) %}
     {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'window') | selectattr('state', '==', window_state) %}
@@ -133,7 +133,7 @@ variables:
     {{result.sensors|join(', ')}}
   weather_translated: >
     {% set result = namespace(weather_translated='') %}
-    {% if weather_tranlation_language == 'de' %}
+    {% if weather_translation_language == 'de' %}
         {% if states(weather_entity) == 'clear-night' %}
             {% set result.weather_translated = "klare Nacht" %}
         {% elif states(weather_entity) == 'cloudy' %}
