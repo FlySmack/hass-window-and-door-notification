@@ -2,7 +2,7 @@ blueprint:
   name: Window, door and lock open detection and notification
   description: Regularly test all sensors with 'window', 'door' and 'lock' device-class for open state and if so execute an action in case a specific weather condition has been raised, or a peson has left the zone.
   domain: automation
-  source_url: https://github.com/FlySmack/hass-window-and-door-notification
+  source_url: https://github.com/FlySmack/hass-window-and-door-notification/blob/main/hass-window-and-door-notification.yaml
   input:
     window_state:
       name: The state checked for device-class 'window'
