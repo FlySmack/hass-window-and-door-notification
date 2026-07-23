@@ -109,32 +109,28 @@ variables:
   weather_tranlation_language: !input weather_tranlation_language
   sensors: >
     {% set result = namespace(sensors=[]) %}
-
-    # Depending on the input, lock_state can be a string or a list. This ensures that we always have a list to work with in the subsequent logic.
-    {% set lock_state_list = [lock_state] if lock_state is string else lock_state %}
-    
-    {% set all_targets = (
-      states.binary_sensor 
-      | selectattr('attributes.device_class', 'defined')
-      | selectattr('attributes.device_class', 'in', ['window', 'door'])
-      | list
-    ) + (states.lock | list) %}
-    
-    {% for state in all_targets %}
-      {% if state.entity_id not in exclude.entity_id %}
-        {% if (state.attributes.device_class == 'window' and state.state == window_state) or
-              (state.attributes.device_class == 'door' and state.state == door_state) or
-              (state.domain == 'lock' and state.state in lock_state) %}
-          
-          {% set area = area_name(state.entity_id) %}
-          {% set name = area ~ ' ' ~ state.name if area else state.name %}
-          {% set result.sensors = result.sensors + [name] %}
-          
-        {% endif %}
+    {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'window') | selectattr('state', '==', window_state) %}
+      {% if not state.entity_id in exclude.entity_id %}
+        {% set area = area_name(state.entity_id) %}
+        {% set name = area ~ ' ' ~ state.name if area else state.name %}
+        {% set result.sensors = result.sensors + [name] %}
       {% endif %}
     {% endfor %}
-    
-    {{ result.sensors | join(', ') }}
+    {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'door') | selectattr('state', '==', door_state) %}
+      {% if not state.entity_id in exclude.entity_id %}
+        {% set area = area_name(state.entity_id) %}
+        {% set name = area ~ ' ' ~ state.name if area else state.name %}
+        {% set result.sensors = result.sensors + [name] %}
+      {% endif %}
+    {% endfor %}
+    {% for state in states.lock | selectattr('state', 'contains', lock_state) %}
+      {% if not state.entity_id in exclude.entity_id %}
+        {% set area = area_name(state.entity_id) %}
+        {% set name = area ~ ' ' ~ state.name if area else state.name %}
+        {% set result.sensors = result.sensors + [name] %}
+      {% endif %}
+    {% endfor %}
+    {{result.sensors|join(', ')}}
   weather_translated: >
     {% set result = namespace(weather_translated='') %}
     {% if weather_tranlation_language == 'de' %}
