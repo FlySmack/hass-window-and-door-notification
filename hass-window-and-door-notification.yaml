@@ -109,6 +109,9 @@ variables:
   weather_tranlation_language: !input weather_tranlation_language
   sensors: >
     {% set result = namespace(sensors=[]) %}
+
+    # Depending on the input, lock_state can be a string or a list. This ensures that we always have a list to work with in the subsequent logic.
+    {% set lock_state_list = [lock_state] if lock_state is string else lock_state %}
     
     {% set all_targets = (
       states.binary_sensor 
