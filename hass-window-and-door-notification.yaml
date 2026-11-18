@@ -1,6 +1,6 @@
 blueprint:
   name: Window, door and lock open detection and notification
-  description: "v1.0.1 | Regularly test all sensors with 'window', 'door' and 'lock' device-class for open state and if so execute an action in case a specific weather condition has been raised, or a person has left the zone."
+  description: "v1.0.2 | Regularly test all sensors with 'window', 'door' and 'lock' device-class for open state and if so execute an action in case a specific weather condition has been raised, or a person has left the zone."
   domain: automation
   source_url: https://github.com/FlySmack/hass-window-and-door-notification/blob/main/hass-window-and-door-notification.yaml
   input:
@@ -106,11 +106,86 @@ variables:
   lock_state: !input lock_state
   weather_entity: !input weather_entity
   exclude: !input exclude
+  excluded_ids: >
+    {% set _ei  = exclude.entity_id  if exclude.entity_id  is defined else [] %}
+    {% set _di  = exclude.device_id  if exclude.device_id  is defined else [] %}
+    {% set _ai  = exclude.area_id    if exclude.area_id    is defined else [] %}
+    {% set _fi  = exclude.floor_id   if exclude.floor_id   is defined else [] %}
+    {% set _li  = exclude.label_id   if exclude.label_id   is defined else [] %}
+    {% set excl_entities = [_ei] if _ei is string else _ei %}
+    {% set excl_devices  = [_di] if _di is string else _di %}
+    {% set excl_areas    = [_ai] if _ai is string else _ai %}
+    {% set excl_floors   = [_fi] if _fi is string else _fi %}
+    {% set excl_labels   = [_li] if _li is string else _li %}
+    {% set excl_sub      = exclude.exclude if exclude.exclude is defined else {} %}
+    {% set _nei = excl_sub.entity_id if excl_sub.entity_id is defined else [] %}
+    {% set _ndi = excl_sub.device_id if excl_sub.device_id is defined else [] %}
+    {% set _nai = excl_sub.area_id   if excl_sub.area_id   is defined else [] %}
+    {% set _nfi = excl_sub.floor_id  if excl_sub.floor_id  is defined else [] %}
+    {% set _nli = excl_sub.label_id  if excl_sub.label_id  is defined else [] %}
+    {% set not_entities  = [_nei] if _nei is string else _nei %}
+    {% set not_devices   = [_ndi] if _ndi is string else _ndi %}
+    {% set not_areas     = [_nai] if _nai is string else _nai %}
+    {% set not_floors    = [_nfi] if _nfi is string else _nfi %}
+    {% set not_labels    = [_nli] if _nli is string else _nli %}
+    {% set ns = namespace(ids=[], not_ids=[]) %}
+    {% for eid in excl_entities %}
+      {% set ns.ids = ns.ids + [eid] %}
+    {% endfor %}
+    {% for did in excl_devices %}
+      {% for eid in device_entities(did) %}
+        {% set ns.ids = ns.ids + [eid] %}
+      {% endfor %}
+    {% endfor %}
+    {% for aid in excl_areas %}
+      {% for eid in area_entities(aid) %}
+        {% set ns.ids = ns.ids + [eid] %}
+      {% endfor %}
+    {% endfor %}
+    {% for fid in excl_floors %}
+      {% for aid in floor_areas(fid) %}
+        {% for eid in area_entities(aid) %}
+          {% set ns.ids = ns.ids + [eid] %}
+        {% endfor %}
+      {% endfor %}
+    {% endfor %}
+    {% for lid in excl_labels %}
+      {% for eid in label_entities(lid) %}
+        {% set ns.ids = ns.ids + [eid] %}
+      {% endfor %}
+    {% endfor %}
+    {% for eid in not_entities %}
+      {% set ns.not_ids = ns.not_ids + [eid] %}
+    {% endfor %}
+    {% for did in not_devices %}
+      {% for eid in device_entities(did) %}
+        {% set ns.not_ids = ns.not_ids + [eid] %}
+      {% endfor %}
+    {% endfor %}
+    {% for aid in not_areas %}
+      {% for eid in area_entities(aid) %}
+        {% set ns.not_ids = ns.not_ids + [eid] %}
+      {% endfor %}
+    {% endfor %}
+    {% for fid in not_floors %}
+      {% for aid in floor_areas(fid) %}
+        {% for eid in area_entities(aid) %}
+          {% set ns.not_ids = ns.not_ids + [eid] %}
+        {% endfor %}
+      {% endfor %}
+    {% endfor %}
+    {% for lid in not_labels %}
+      {% for eid in label_entities(lid) %}
+        {% set ns.not_ids = ns.not_ids + [eid] %}
+      {% endfor %}
+    {% endfor %}
+    {{ ns.ids | unique | reject('in', ns.not_ids) | list | to_json }}
   weather_translation_language: !input weather_translation_language
   sensors: >
+    {% set excl = excluded_ids | trim | from_json %}
     {% set result = namespace(sensors=[]) %}
     {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'window') | selectattr('state', '==', window_state) %}
-      {% if not state.entity_id in exclude.entity_id %}
+      {% if not state.entity_id in excl %}
         {% set area   = area_name(state.entity_id) %}
         {% set device = device_name(state.entity_id) %}
         {% set ename  = entity_name(state.entity_id) %}
@@ -119,7 +194,7 @@ variables:
       {% endif %}
     {% endfor %}
     {% for state in states.binary_sensor | selectattr('attributes.device_class', '==', 'door') | selectattr('state', '==', door_state) %}
-      {% if not state.entity_id in exclude.entity_id %}
+      {% if not state.entity_id in excl %}
         {% set area   = area_name(state.entity_id) %}
         {% set device = device_name(state.entity_id) %}
         {% set ename  = entity_name(state.entity_id) %}
@@ -127,8 +202,8 @@ variables:
         {% set result.sensors = result.sensors + [label] %}
       {% endif %}
     {% endfor %}
-    {% for state in states.lock | selectattr('state', 'contains', lock_state) %}
-      {% if not state.entity_id in exclude.entity_id %}
+    {% for state in states.lock | selectattr('state', 'in', lock_state) %}
+      {% if not state.entity_id in excl %}
         {% set area   = area_name(state.entity_id) %}
         {% set device = device_name(state.entity_id) %}
         {% set ename  = entity_name(state.entity_id) %}
@@ -166,8 +241,6 @@ variables:
             {% set result.weather_translated = "Sonnig" %}
         {% elif states(weather_entity) == 'windy' %}
             {% set result.weather_translated = "Windig" %}
-        {% elif states(weather_entity) == 'windy' %}
-            {% set result.weather_translated = "Windig" %}
         {% elif states(weather_entity) == 'windy-variant' %}
             {% set result.weather_translated = "Windig aus wechselnden Richtungen" %}
         {% elif states(weather_entity) == 'exceptional' %}
@@ -186,7 +259,8 @@ trigger:
     zone: !input zone_entity
     event: leave
 condition:
-- '{{ sensors != '''' }}'
+  - condition: template
+    value_template: "{{ sensors != '' }}"
 action:
 - choose: []
   default: !input actions
