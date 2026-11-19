@@ -1,6 +1,6 @@
 blueprint:
   name: Window, door and lock open detection and notification
-  description: "v1.0.2 | Regularly test all sensors with 'window', 'door' and 'lock' device-class for open state and if so execute an action in case a specific weather condition has been raised, or a person has left the zone."
+  description: "v1.0.3 | Regularly test all sensors with 'window', 'door' and 'lock' device-class for open state and if so execute an action in case a specific weather condition has been raised, or a person has left the zone."
   domain: automation
   source_url: https://github.com/FlySmack/hass-window-and-door-notification/blob/main/hass-window-and-door-notification.yaml
   input:
@@ -188,7 +188,7 @@ variables:
       {% if not state.entity_id in excl %}
         {% set area   = area_name(state.entity_id) %}
         {% set device = device_name(state.entity_id) %}
-        {% set ename  = entity_name(state.entity_id) %}
+        {% set ename  = entity_name(state.entity_id) or device %}
         {% set label  = (area ~ ' › ' if area else '') ~ (device ~ ' · ' if device and device != ename else '') ~ ename %}
         {% set result.sensors = result.sensors + [label] %}
       {% endif %}
@@ -197,7 +197,7 @@ variables:
       {% if not state.entity_id in excl %}
         {% set area   = area_name(state.entity_id) %}
         {% set device = device_name(state.entity_id) %}
-        {% set ename  = entity_name(state.entity_id) %}
+        {% set ename  = entity_name(state.entity_id) or device %}
         {% set label  = (area ~ ' › ' if area else '') ~ (device ~ ' · ' if device and device != ename else '') ~ ename %}
         {% set result.sensors = result.sensors + [label] %}
       {% endif %}
@@ -206,7 +206,7 @@ variables:
       {% if not state.entity_id in excl %}
         {% set area   = area_name(state.entity_id) %}
         {% set device = device_name(state.entity_id) %}
-        {% set ename  = entity_name(state.entity_id) %}
+        {% set ename  = entity_name(state.entity_id) or device %}
         {% set label  = (area ~ ' › ' if area else '') ~ (device ~ ' · ' if device and device != ename else '') ~ ename %}
         {% set result.sensors = result.sensors + [label] %}
       {% endif %}
