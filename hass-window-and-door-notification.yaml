@@ -1,6 +1,6 @@
 blueprint:
   name: Window, door and lock open detection and notification
-  description: "v1.0.3 | Regularly test all sensors with 'window', 'door' and 'lock' device-class for open state and if so execute an action in case a specific weather condition has been raised, or a person has left the zone."
+  description: "v1.0.4 | Regularly test all sensors with 'window', 'door' and 'lock' device-class for open state and if so execute an action in case a specific weather condition has been raised, or a person has left the zone."
   domain: automation
   source_url: https://github.com/FlySmack/hass-window-and-door-notification/blob/main/hass-window-and-door-notification.yaml
   input:
@@ -202,7 +202,7 @@ variables:
         {% set result.sensors = result.sensors + [label] %}
       {% endif %}
     {% endfor %}
-    {% for state in states.lock | selectattr('state', 'in', lock_state) %}
+    {% for state in states.lock | selectattr('state', 'in', lock_state if lock_state is sequence and lock_state is not string else [lock_state]) %}
       {% if not state.entity_id in excl %}
         {% set area   = area_name(state.entity_id) %}
         {% set device = device_name(state.entity_id) %}
